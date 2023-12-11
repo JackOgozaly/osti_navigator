@@ -277,7 +277,7 @@ for message in st.session_state.messages:
 
 #Reading in our context
 # Location of our data
-persist_directory = r'/Users/jackogozaly/Desktop/Python_Directory/Embeddings/OSTI'
+persist_directory = download_path[0]
 ## here we are using OpenAI embeddings but in future we will swap out to local embeddings
 embedding = OpenAIEmbeddings()
 
