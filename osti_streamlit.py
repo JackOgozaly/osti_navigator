@@ -182,6 +182,9 @@ def llm_output(llm_response):
     
     contract_df = pd.DataFrame(df['DOE_CONTRACT_NUMBER'].unique())
     contract_df.columns = ['Contracts']
+    contract_df['Contracts'] = contract_df['Contracts'].str.split(';')
+    contract_df = contract_df.explode('Contracts')
+    contract_df = contract_df['Contracts'].str.strip().drop_duplicates()
                                
     st.dataframe(contract_df, hide_index= True)
 
