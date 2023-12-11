@@ -221,7 +221,7 @@ if 'total_tokens' not in st.session_state:
     st.session_state['total_tokens'] = 0
 
 if 'df' not in st.session_state:
-    st.session_state['df'] = pd.read_csv(r'osti_df_full.csv')
+    st.session_state['df'] = pd.read_csv(r'https://raw.githubusercontent.com/JackOgozaly/osti_navigator/main/osti_df_full.csv')
 
 #Defining our stateful buttons
 if 'clicked1' not in st.session_state:
