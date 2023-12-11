@@ -174,6 +174,9 @@ def llm_output(llm_response):
     
     research_orgs = pd.DataFrame(df['RESEARCH_ORG'].unique())
     research_orgs.columns = ['Research Orgs']
+    research_orgs['Research Orgs'] = research_orgs['Research Orgs'].str.split(';')
+    research_orgs = research_orgs.explode('Research Orgs')
+    research_orgs = research_orgs['Research Orgs'].drop_duplicates()
     st.dataframe(research_orgs, hide_index=True, column_config =None)
     
     fake_typing("Contracts:")
