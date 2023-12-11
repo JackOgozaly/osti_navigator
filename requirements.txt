@@ -1,0 +1,10 @@
+streamlit==1.26.0
+langchain==0.0.333
+google-auth-oauthlib==1.1.0
+google-api-python-client==2.107.0
+google-auth-httplib2==0.1.1
+openai==0.27.8
+chromadb==0.4.17
+pysqlite3-binary==0.5.2
+tiktoken==0.5.1
+faiss-cpu==1.7.4
