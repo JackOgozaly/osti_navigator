@@ -41,7 +41,71 @@ button_3_text = 'Molten Salts'
 os.environ["OPENAI_API_KEY"] = st.secrets["openai_key"]
 google_api_key = json.loads(st.secrets['google_api_key'], strict=False)
 
+#________________________Embedding Setup_____________________________________#
 
+#Files to download
+files = ['1h7JGEiffvxPHd8TXdU7fZaEuZf093pBV', '1rP3OYZ5N5UFLcjP92ZIuLDceIk2SKKsb', 
+         '1e_5xP-tbD3qW_HGgr8ax7tJ-f6b9Q-uq', '1d36ITJU0OXtfwPRrM8DO7ErzmS6DeX0P', 
+         '1LYTYUK5g9FYTW49FadzyuJUBHsPReuEC', '153loCHqapm18uvcOCcLo8njRe2r_6E-t']
+
+download_path = ['~/OSTI/',
+                 '~/OSTI/3ecfa40e-85cc-4506-b101-16d7fb1eecfc/',
+                 '~/OSTI/3ecfa40e-85cc-4506-b101-16d7fb1eecfc/',
+                 '~/OSTI/3ecfa40e-85cc-4506-b101-16d7fb1eecfc/',
+                 '~/OSTI/3ecfa40e-85cc-4506-b101-16d7fb1eecfc/',
+                 '~/OSTI/3ecfa40e-85cc-4506-b101-16d7fb1eecfc/']
+
+#Make our directory
+if not os.path.exists(download_path[1]):
+    os.makedirs(download_path[1])
+
+
+#We only want to call the Google Drive API once per script run. Once the directory exists and has files, don't download anything
+if len(os.listdir(download_path[1])) == 0:     
+    # Create credentials from the JSON object
+    credentials = service_account.Credentials.from_service_account_info(
+             google_api_key,
+             scopes=["https://www.googleapis.com/auth/drive"]
+         )
+    # Scope required for accessing and modifying Drive data
+    #SCOPES = ['https://www.googleapis.com/auth/drive']
+    
+    def download_file(real_file_id, local_folder_path):
+        """Downloads a file
+        Args:
+            real_file_id: ID of the file to download
+            local_folder_path: Local path where the file will be saved
+        Returns: IO object with location.
+        """
+       # creds = service_account.Credentials.from_service_account_file(
+        #    SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+    
+    
+    
+        # create drive api client
+        service = build("drive", "v3", credentials=credentials)
+    
+        file_id = real_file_id
+    
+        # Get file metadata to obtain the file name
+        file_metadata = service.files().get(fileId=file_id).execute()
+        file_name = file_metadata['name']
+    
+        local_file_path = os.path.join(local_folder_path, file_name)
+    
+        # pylint: disable=maybe-no-member
+        request = service.files().get_media(fileId=file_id)
+        with open(local_file_path, 'wb') as local_file:
+            downloader = MediaIoBaseDownload(local_file, request)
+            done = False
+            while done is False:
+                    status, done = downloader.next_chunk()
+    
+        return local_file_path
+    
+    for file, path in zip(files, download_path):
+        download_file(real_file_id=file, local_folder_path=path)
+        
 #_____________________Function Setup________________________#
 def fake_typing(text):
     '''
@@ -137,71 +201,6 @@ def chatbot(question):
              token_placeholder.write(f"Total Tokens Used in Conversation: {st.session_state['total_tokens']}")              
        #Take our model's output and clean it up for the user
        llm_output(response)
-
-#________________________Embedding Setup_____________________________________#
-
-#Files to download
-files = ['1h7JGEiffvxPHd8TXdU7fZaEuZf093pBV', '1rP3OYZ5N5UFLcjP92ZIuLDceIk2SKKsb', 
-         '1e_5xP-tbD3qW_HGgr8ax7tJ-f6b9Q-uq', '1d36ITJU0OXtfwPRrM8DO7ErzmS6DeX0P', 
-         '1LYTYUK5g9FYTW49FadzyuJUBHsPReuEC', '153loCHqapm18uvcOCcLo8njRe2r_6E-t']
-
-download_path = ['~/OSTI/',
-                 '~/OSTI/3ecfa40e-85cc-4506-b101-16d7fb1eecfc/',
-                 '~/OSTI/3ecfa40e-85cc-4506-b101-16d7fb1eecfc/',
-                 '~/OSTI/3ecfa40e-85cc-4506-b101-16d7fb1eecfc/',
-                 '~/OSTI/3ecfa40e-85cc-4506-b101-16d7fb1eecfc/',
-                 '~/OSTI/3ecfa40e-85cc-4506-b101-16d7fb1eecfc/']
-
-#Make our directory
-if not os.path.exists(download_path[1]):
-    os.makedirs(download_path[1])
-
-#We only want to call the Google Drive API once per script run. Once the directory exists and has files, don't download anything
-if len(os.listdir(download_path[1])) == 0:     
-    # Create credentials from the JSON object
-    credentials = service_account.Credentials.from_service_account_info(
-             google_api_key,
-             scopes=["https://www.googleapis.com/auth/drive"]
-         )
-    # Scope required for accessing and modifying Drive data
-    #SCOPES = ['https://www.googleapis.com/auth/drive']
-    
-    def download_file(real_file_id, local_folder_path):
-        """Downloads a file
-        Args:
-            real_file_id: ID of the file to download
-            local_folder_path: Local path where the file will be saved
-        Returns: IO object with location.
-        """
-       # creds = service_account.Credentials.from_service_account_file(
-        #    SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-    
-    
-    
-        # create drive api client
-        service = build("drive", "v3", credentials=credentials)
-    
-        file_id = real_file_id
-    
-        # Get file metadata to obtain the file name
-        file_metadata = service.files().get(fileId=file_id).execute()
-        file_name = file_metadata['name']
-    
-        local_file_path = os.path.join(local_folder_path, file_name)
-    
-        # pylint: disable=maybe-no-member
-        request = service.files().get_media(fileId=file_id)
-        with open(local_file_path, 'wb') as local_file:
-            downloader = MediaIoBaseDownload(local_file, request)
-            done = False
-            while done is False:
-                    status, done = downloader.next_chunk()
-    
-        return local_file_path
-    
-    for file, path in zip(files, download_path):
-        download_file(real_file_id=file, local_folder_path=path)
-
 
 #____________________Streamlit Setup____________________________#
 
