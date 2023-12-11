@@ -43,35 +43,6 @@ google_api_key = json.loads(st.secrets['google_api_key'], strict=False)
 
 
 #_____________________Function Setup________________________#
-def download_file(real_file_id, local_folder_path):
-    """Downloads a file
-    Args:
-        real_file_id: ID of the file to download
-        local_folder_path: Local path where the file will be saved
-    Returns: IO object with location.
-    """
-
-    # create drive api client
-    service = build("drive", "v3", credentials=credentials)
-
-    file_id = real_file_id
-
-    # Get file metadata to obtain the file name
-    file_metadata = service.files().get(fileId=file_id).execute()
-    file_name = file_metadata['name']
-
-    local_file_path = os.path.join(local_folder_path, file_name)
-
-    # pylint: disable=maybe-no-member
-    request = service.files().get_media(fileId=file_id)
-    with open(local_file_path, 'wb') as local_file:
-        downloader = MediaIoBaseDownload(local_file, request)
-        done = False
-        while done is False:
-                status, done = downloader.next_chunk()
-
-    return local_file_path
-
 def fake_typing(text):
     '''
     This function should be placed within a 
@@ -192,7 +163,42 @@ if len(os.listdir(download_path[1])) == 0:
              google_api_key,
              scopes=["https://www.googleapis.com/auth/drive"]
          )
-
+    # Scope required for accessing and modifying Drive data
+    #SCOPES = ['https://www.googleapis.com/auth/drive']
+    
+    def download_file(real_file_id, local_folder_path):
+        """Downloads a file
+        Args:
+            real_file_id: ID of the file to download
+            local_folder_path: Local path where the file will be saved
+        Returns: IO object with location.
+        """
+       # creds = service_account.Credentials.from_service_account_file(
+        #    SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+    
+    
+    
+        # create drive api client
+        service = build("drive", "v3", credentials=credentials)
+    
+        file_id = real_file_id
+    
+        # Get file metadata to obtain the file name
+        file_metadata = service.files().get(fileId=file_id).execute()
+        file_name = file_metadata['name']
+    
+        local_file_path = os.path.join(local_folder_path, file_name)
+    
+        # pylint: disable=maybe-no-member
+        request = service.files().get_media(fileId=file_id)
+        with open(local_file_path, 'wb') as local_file:
+            downloader = MediaIoBaseDownload(local_file, request)
+            done = False
+            while done is False:
+                    status, done = downloader.next_chunk()
+    
+        return local_file_path
+    
     for file, path in zip(files, download_path):
         download_file(real_file_id=file, local_folder_path=path)
 
