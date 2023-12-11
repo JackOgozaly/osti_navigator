@@ -1,10 +1,16 @@
+#Used for retrieving our embeddings from google drive
+import os
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseDownload
+import json
+
+#General app required packages
 import streamlit as st
 import time
 import re
-import os
 from collections import Counter #Used for sorting our 
 import pandas as pd
-
 
 #Langchain stuff
 from langchain.chains import RetrievalQAWithSourcesChain
@@ -14,6 +20,11 @@ from langchain.prompts import PromptTemplate #Used to modify the prompt for our 
 from langchain.callbacks import get_openai_callback #Used to bring in stuff like cost, token usage, etc.
 from langchain.embeddings import OpenAIEmbeddings #Used to embed
 from langchain.vectorstores import Chroma #Used to store embeddings
+
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+import sqlite3
 
 #Streamlit customization items
 st.title('OSTI Navigator')
@@ -27,9 +38,40 @@ button_2_text = 'Solar Power'
 button_3_text = 'Molten Salts'
 
 #Bring in API Key
-os.environ["OPENAI_API_KEY"] = open("/Users/jackogozaly/Desktop/Python_Directory/key.txt", "r").read().strip("\n")
+os.environ["OPENAI_API_KEY"] = st.secrets["openai_key"]
+google_api_key = json.loads(st.secrets['google_api_key'], strict=False)
+
 
 #_____________________Function Setup________________________#
+def download_file(real_file_id, local_folder_path):
+    """Downloads a file
+    Args:
+        real_file_id: ID of the file to download
+        local_folder_path: Local path where the file will be saved
+    Returns: IO object with location.
+    """
+
+    # create drive api client
+    service = build("drive", "v3", credentials=credentials)
+
+    file_id = real_file_id
+
+    # Get file metadata to obtain the file name
+    file_metadata = service.files().get(fileId=file_id).execute()
+    file_name = file_metadata['name']
+
+    local_file_path = os.path.join(local_folder_path, file_name)
+
+    # pylint: disable=maybe-no-member
+    request = service.files().get_media(fileId=file_id)
+    with open(local_file_path, 'wb') as local_file:
+        downloader = MediaIoBaseDownload(local_file, request)
+        done = False
+        while done is False:
+                status, done = downloader.next_chunk()
+
+    return local_file_path
+
 def fake_typing(text):
     '''
     This function should be placed within a 
@@ -106,8 +148,6 @@ def llm_output(llm_response):
                                
     st.dataframe(contract_df, hide_index= True)
 
-
-
 def chatbot(question):
     st.session_state.messages.append({"role": "user", "content": question})
     # Display user message in chat message container
@@ -126,6 +166,35 @@ def chatbot(question):
              token_placeholder.write(f"Total Tokens Used in Conversation: {st.session_state['total_tokens']}")              
        #Take our model's output and clean it up for the user
        llm_output(response)
+
+#________________________Embedding Setup_____________________________________#
+
+#Files to download
+files = ['1h7JGEiffvxPHd8TXdU7fZaEuZf093pBV', '1rP3OYZ5N5UFLcjP92ZIuLDceIk2SKKsb', 
+         '1e_5xP-tbD3qW_HGgr8ax7tJ-f6b9Q-uq', '1d36ITJU0OXtfwPRrM8DO7ErzmS6DeX0P', 
+         '1LYTYUK5g9FYTW49FadzyuJUBHsPReuEC', '153loCHqapm18uvcOCcLo8njRe2r_6E-t']
+
+download_path = ['~/OSTI/',
+                 '~/OSTI/3ecfa40e-85cc-4506-b101-16d7fb1eecfc/',
+                 '~/OSTI/3ecfa40e-85cc-4506-b101-16d7fb1eecfc/',
+                 '~/OSTI/3ecfa40e-85cc-4506-b101-16d7fb1eecfc/',
+                 '~/OSTI/3ecfa40e-85cc-4506-b101-16d7fb1eecfc/',
+                 '~/OSTI/3ecfa40e-85cc-4506-b101-16d7fb1eecfc/']
+
+#Make our directory
+if not os.path.exists(download_path[1]):
+    os.makedirs(download_path[1])
+
+#We only want to call the Google Drive API once per script run. Once the directory exists and has files, don't download anything
+if len(os.listdir(download_path[1])) == 0:     
+    # Create credentials from the JSON object
+    credentials = service_account.Credentials.from_service_account_info(
+             google_api_key,
+             scopes=["https://www.googleapis.com/auth/drive"]
+         )
+
+    for file, path in zip(files, download_path):
+        download_file(real_file_id=file, local_folder_path=path)
 
 
 #____________________Streamlit Setup____________________________#
@@ -147,8 +216,7 @@ if 'total_tokens' not in st.session_state:
     st.session_state['total_tokens'] = 0
 
 if 'df' not in st.session_state:
-    st.session_state['df'] = pd.read_csv(r'/Users/jackogozaly/Desktop/Python_Directory/osti_df_full.csv')
-
+    st.session_state['df'] = pd.read_csv(r'~/osti_df_full.csv')
 
 #Defining our stateful buttons
 if 'clicked1' not in st.session_state:
@@ -215,7 +283,6 @@ vectordb = Chroma(persist_directory=persist_directory,
 #Set our retriver and limit the search to 4 documents
 retriever = vectordb.as_retriever()
 retriever = vectordb.as_retriever(search_kwargs={"k": 10})
-
 
 #Modify our prompt to discourage hallucinations
 prompt_template = """You are an OSTI search bot. if you tell the user you don't know something you will have failed. If you tell the user the information is not specific enough, you will fail. Use the following information to briefly answer (1-2 sentences) the question the user asked:
