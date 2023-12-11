@@ -160,7 +160,6 @@ def llm_output(llm_response):
     #Filter for the top two URLS
     relevant_links = relevant_links[0:5]
     
-    
     df = st.session_state['df']
     
     df = df[df['CITATION_URL'].isin(relevant_links)]
@@ -176,7 +175,7 @@ def llm_output(llm_response):
     research_orgs.columns = ['Research Orgs']
     research_orgs['Research Orgs'] = research_orgs['Research Orgs'].str.split(';')
     research_orgs = research_orgs.explode('Research Orgs')
-    research_orgs = research_orgs['Research Orgs'].drop_duplicates()
+    research_orgs = research_orgs['Research Orgs'].str.strip().drop_duplicates()
     st.dataframe(research_orgs, hide_index=True, column_config =None)
     
     fake_typing("Contracts:")
