@@ -247,7 +247,9 @@ def llm_output(llm_response):
     df = df[df['CITATION_URL'].isin(relevant_links)]
     
     data = network_graph_df(df)
-    print(data)
+
+    for key, value in data.items():
+       st.write(f'{key}: {value}')
     # Create a networkx graph
     G = nx.Graph()
 
