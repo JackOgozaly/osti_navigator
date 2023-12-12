@@ -21,6 +21,11 @@ from langchain.callbacks import get_openai_callback #Used to bring in stuff like
 from langchain.embeddings import OpenAIEmbeddings #Used to embed
 from langchain.vectorstores import Chroma #Used to store embeddings
 
+#Network graph stuff
+import plotly.graph_objects as go
+import networkx as nx
+
+
 __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
@@ -129,6 +134,48 @@ def fake_typing(text):
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": full_response})
 
+def network_graph_df(df):
+    sub_df = df[df['RESEARCH_ORG'].notnull()].copy()
+    sub_df = sub_df[sub_df['SUBJECT'].notnull()]
+    
+    sub_df['clean_research_org'] = sub_df['RESEARCH_ORG'].str.split(',').str[0]
+    
+    new_df = sub_df[['SUBJECT', 'clean_research_org']].copy()
+    
+    new_df['SUBJECT'] = new_df['SUBJECT'].str.split(';')
+    new_df = new_df.explode('SUBJECT')
+    new_df['SUBJECT'] = new_df['SUBJECT'].apply(remove_numbers_and_space)
+    
+    
+    new_df['SUBJECT'] = new_df['SUBJECT'].str.strip()
+    
+    new_df = new_df[new_df['clean_research_org'].str.contains(r'\([A-Z]+\)', regex=True)]
+    new_df = new_df[new_df['clean_research_org'].str.contains('Laboratory')]
+    
+    
+    
+    size_df = new_df.groupby(['SUBJECT']).size().reset_index(drop=False).copy()
+    size_df.columns = ['topic', 'size']
+    
+    
+    new_df = new_df.groupby(['clean_research_org', 'SUBJECT']).size().reset_index(drop=False)
+    
+    new_df.columns = ['research_org', 'topic', 'count']
+    new_df = new_df[['research_org', 'topic']]
+    
+    
+    all_df = pd.merge(new_df, size_df, how = 'left',
+                      on = 'topic')
+    
+
+    all_df['org_acronym'] = all_df['research_org'].str.extract(r'\(([A-Z]+)\)')
+    
+    
+    # Group by 'agency' and aggregate 'topic' and 'size' into a list of tuples
+    data = all_df.groupby('org_acronym').apply(lambda x: list(zip(x['topic'], x['size']))).to_dict()
+
+    return data
+
 
 def click_button(button_type):
     '''
@@ -187,6 +234,84 @@ def llm_output(llm_response):
     contract_df = contract_df['Contracts'].str.strip().drop_duplicates()
                                
     st.dataframe(contract_df, hide_index= True)
+
+    fake_typing("Use the Network Graph Below to Understand how your question relates to other topics")
+
+    data = network_graph_df(df)
+    # Create a networkx graph
+    G = nx.Graph()
+
+    # Add nodes and edges to the graph
+    for agency, topics in data.items():
+        # Add agency node
+        G.add_node(agency, node_type="agency")
+
+        # Add topic nodes and edges
+        for topic, count in topics:
+            G.add_node(topic, node_type="topic", count=count)
+            G.add_edge(agency, topic)
+
+    # Create layout
+    pos = nx.spring_layout(G, dim=3)  # Set dim=3 for 3D layout
+
+    # Define node traces
+    node_agency_trace = go.Scatter3d(
+        x=[pos[node][0] for node, attrs in G.nodes(data=True) if attrs["node_type"] == "agency"],
+        y=[pos[node][1] for node, attrs in G.nodes(data=True) if attrs["node_type"] == "agency"],
+        z=[pos[node][2] for node, attrs in G.nodes(data=True) if attrs["node_type"] == "agency"],
+        text=[node for node, attrs in G.nodes(data=True) if attrs["node_type"] == "agency"],
+        mode="markers+text",
+        marker=dict(size=20, color="blue"),  # Adjust the size for agency nodes
+        hovertemplate="%{text}<extra></extra>"
+    )
+
+    # Define edge trace
+    edge_trace = go.Scatter3d(
+        x=[pos[edge[0]][0] for edge in G.edges() if G.nodes(data=True)[edge[0]]["node_type"] == "agency"],
+        y=[pos[edge[0]][1] for edge in G.edges() if G.nodes(data=True)[edge[0]]["node_type"] == "agency"],
+        z=[pos[edge[0]][2] for edge in G.edges() if G.nodes(data=True)[edge[0]]["node_type"] == "agency"],
+        line=dict(width=1, color="gray"),
+        hoverinfo="none",
+        mode="lines"
+    )
+
+    # Create text traces for topics
+    max_text_size = 10  # Set the maximum size for text
+    text_trace = go.Scatter3d(
+        x=[pos[node][0] for node, attrs in G.nodes(data=True) if attrs["node_type"] == "topic"],
+        y=[pos[node][1] for node, attrs in G.nodes(data=True) if attrs["node_type"] == "topic"],
+        z=[pos[node][2] for node, attrs in G.nodes(data=True) if attrs["node_type"] == "topic"],
+        text=[node for node, attrs in G.nodes(data=True) if attrs["node_type"] == "topic"],
+        mode="text",
+        hoverinfo="text",
+        textposition="middle center",
+        textfont=dict(size=[
+            min(attrs["count"], max_text_size) for node, attrs in G.nodes(data=True) if attrs["node_type"] == "topic"
+        ])
+    )
+
+    # Create figure
+    fig = go.Figure(data=[edge_trace, node_agency_trace, text_trace],
+                    layout=go.Layout(
+                        showlegend=False,
+                        hovermode="closest",
+                        margin=dict(b=0, l=0, r=0, t=0),
+                        scene=dict(
+                            xaxis=dict(title="X"),
+                            yaxis=dict(title="Y"),
+                            zaxis=dict(title="Z")
+                        )
+                    )
+    )
+
+    # Add callback to highlight or show only associated topics on agency click
+    fig.update_traces(marker=dict(line=dict(color='black', width=2)))
+
+    fig.update_layout(scene=dict(aspectmode="cube"),
+                      uirevision='layout'  # Keep selection state during updates
+                      )
+    st.plotly_chart(fig)
+
 
 def chatbot(question):
     st.session_state.messages.append({"role": "user", "content": question})
