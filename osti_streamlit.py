@@ -112,6 +112,12 @@ if len(os.listdir(download_path[1])) == 0:
         download_file(real_file_id=file, local_folder_path=path)
         
 #_____________________Function Setup________________________#
+def remove_numbers_and_space(text):
+    if text[:2].isdigit() and text[2] == ' ':
+        return text[3:]
+    else:
+        return text
+
 def fake_typing(text):
     '''
     This function should be placed within a 
