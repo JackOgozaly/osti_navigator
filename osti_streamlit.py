@@ -284,6 +284,7 @@ def llm_output(llm_response):
 
     # Create text traces for topics
     max_text_size = 10  # Set the maximum size for text
+    min_text_size = 3
     text_trace = go.Scatter3d(
         x=[pos[node][0] for node, attrs in G.nodes(data=True) if attrs["node_type"] == "topic"],
         y=[pos[node][1] for node, attrs in G.nodes(data=True) if attrs["node_type"] == "topic"],
@@ -293,7 +294,7 @@ def llm_output(llm_response):
         hoverinfo="text",
         textposition="middle center",
         textfont=dict(size=[
-            min(attrs["count"], max_text_size) for node, attrs in G.nodes(data=True) if attrs["node_type"] == "topic"
+            max(min(attrs["count"], max_text_size), min_text_size) for node, attrs in G.nodes(data=True) if attrs["node_type"] == "topic"
         ])
     )
 
