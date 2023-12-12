@@ -150,16 +150,11 @@ def network_graph_df(df):
     
     new_df['SUBJECT'] = new_df['SUBJECT'].str.split(';')
     new_df = new_df.explode('SUBJECT')
+    new_df['SUBJECT'] = new_df['SUBJECT'].str.strip().str.lower()
     new_df['SUBJECT'] = new_df['SUBJECT'].apply(remove_numbers_and_space)
-    
-    
-    new_df['SUBJECT'] = new_df['SUBJECT'].str.strip()
-    
     new_df = new_df[new_df['clean_research_org'].str.contains(r'\([A-Z]+\)', regex=True)]
-    new_df = new_df[new_df['clean_research_org'].str.contains('Laboratory')]
-    
-    
-    
+    new_df = new_df[new_df['clean_research_org'].str.contains('|'.join(['Laboratory', 'Lab.']), case=False)]
+
     size_df = new_df.groupby(['SUBJECT']).size().reset_index(drop=False).copy()
     size_df.columns = ['topic', 'size']
     
@@ -245,20 +240,6 @@ def llm_output(llm_response):
 
     df = st.session_state['df']
     df = df[df['CITATION_URL'].isin(relevant_links)]
-         
-    def convert_df(df):
-        # IMPORTANT: Cache the conversion to prevent computation on every rerun
-       return df.to_csv().encode('utf-8')
-
-    csv = convert_df(df)
-
-    st.download_button(
-              label="Download data as CSV",
-              data=csv,
-              file_name='large_df.csv',
-              mime='text/csv',
-     )
-
          
     data = network_graph_df(df)
 
