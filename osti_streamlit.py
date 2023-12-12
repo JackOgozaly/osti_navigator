@@ -143,7 +143,9 @@ def fake_typing(text):
 def network_graph_df(df):
     sub_df = df[df['RESEARCH_ORG'].notnull()].copy()
     sub_df = sub_df[sub_df['SUBJECT'].notnull()]
-    
+
+    sub_df['RESEARCH_ORG'] = sub_df['RESEARCH_ORG'].str.split(';')
+    sub_df = sub_df.explode('RESEARCH_ORG')
     sub_df['clean_research_org'] = sub_df['RESEARCH_ORG'].str.split(',').str[0]
     
     new_df = sub_df[['SUBJECT', 'clean_research_org']].copy()
@@ -152,6 +154,7 @@ def network_graph_df(df):
     new_df = new_df.explode('SUBJECT')
     new_df['SUBJECT'] = new_df['SUBJECT'].str.strip().str.lower()
     new_df['SUBJECT'] = new_df['SUBJECT'].apply(remove_numbers_and_space)
+         
     new_df = new_df[new_df['clean_research_org'].str.contains(r'\([A-Z]+\)', regex=True)]
     new_df = new_df[new_df['clean_research_org'].str.contains('|'.join(['Laboratory', 'Lab.']), case=False)]
 
@@ -284,7 +287,7 @@ def llm_output(llm_response):
 
     # Create text traces for topics
     max_text_size = 10  # Set the maximum size for text
-    min_text_size = 3
+    min_text_size = 6
     text_trace = go.Scatter3d(
         x=[pos[node][0] for node, attrs in G.nodes(data=True) if attrs["node_type"] == "topic"],
         y=[pos[node][1] for node, attrs in G.nodes(data=True) if attrs["node_type"] == "topic"],
