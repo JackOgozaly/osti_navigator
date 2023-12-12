@@ -306,9 +306,9 @@ def llm_output(llm_response):
                         hovermode="closest",
                         margin=dict(b=0, l=0, r=0, t=0),
                         scene=dict(
-                            xaxis=dict(title="X", showgrid=False, showline=False, showticklabels=False),
-                            yaxis=dict(title="Y", showgrid=False, showline=False, showticklabels=False),
-                            zaxis=dict(title="Z", showgrid=False, showline=False, showticklabels=False)
+                            xaxis=dict(title="X", showgrid=False, showline=False, showticklabels=False, zeroline=False),
+                            yaxis=dict(title="Y", showgrid=False, showline=False, showticklabels=False, zeroline=False),
+                            zaxis=dict(title="Z", showgrid=False, showline=False, showticklabels=False, zeroline=False)
                         )
                     )
     )
