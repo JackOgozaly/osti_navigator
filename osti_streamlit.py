@@ -244,7 +244,9 @@ def llm_output(llm_response):
     fake_typing("Use the Network Graph Below to Understand how your question relates to other topics")
 
     st.dataframe(df)
+    
     data = network_graph_df(df)
+    st.write(data)
     # Create a networkx graph
     G = nx.Graph()
 
