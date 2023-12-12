@@ -294,9 +294,14 @@ def llm_output(llm_response):
         mode="text",
         hoverinfo="text",
         textposition="middle center",
-        textfont=dict(size=[
-            max(min(attrs["count"], max_text_size), min_text_size) for node, attrs in G.nodes(data=True) if attrs["node_type"] == "topic"
-        ])
+        textfont=dict(
+        size=[
+            max(min(attrs["count"], max_text_size), min_text_size) if attrs["node_type"] == "topic" else max_text_size
+            for node, attrs in G.nodes(data=True)
+        ],
+        color=["blue" if attrs["node_type"] == "agency" else "black" for node, attrs in G.nodes(data=True)],
+        bold=["bold" if attrs["node_type"] == "agency" else "normal" for node, attrs in G.nodes(data=True)]
+    )
     )
 
     # Create figure
