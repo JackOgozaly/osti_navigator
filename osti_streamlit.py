@@ -211,11 +211,11 @@ def llm_output(llm_response):
     element_count = Counter(relevant_links)
     relevant_links = sorted(element_count, key=lambda x: element_count[x], reverse=True)
     #Filter for the top two URLS
-    #relevant_links = relevant_links[0:5]
+    relevant_links = relevant_links[0:5]
     
     df = st.session_state['df']
     
-    df = df[df['CITATION_URL'].isin(relevant_links)]
+    df = df[df['CITATION_URL'].isin(relevant_links[0:5])]
     
     #Print our output into the chat
     fake_typing(llm_response['answer'] + '\n\nSources:\n\n') # + "\n\n".join(relevant_links))
@@ -243,7 +243,8 @@ def llm_output(llm_response):
 
     fake_typing("Use the Network Graph Below to Understand how your question relates to other topics")
 
-    st.dataframe(df)
+    df = st.session_state['df']
+    df = df[df['CITATION_URL'].isin(relevant_links)]
     
     data = network_graph_df(df)
     print(data)
