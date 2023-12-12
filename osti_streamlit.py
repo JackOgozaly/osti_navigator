@@ -245,7 +245,21 @@ def llm_output(llm_response):
 
     df = st.session_state['df']
     df = df[df['CITATION_URL'].isin(relevant_links)]
-    
+         
+    def convert_df(df):
+        # IMPORTANT: Cache the conversion to prevent computation on every rerun
+       return df.to_csv().encode('utf-8')
+
+    csv = convert_df(df)
+
+    st.download_button(
+              label="Download data as CSV",
+              data=csv,
+              file_name='large_df.csv',
+              mime='text/csv',
+     )
+
+         
     data = network_graph_df(df)
 
     for key, value in data.items():
