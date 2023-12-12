@@ -317,6 +317,25 @@ def llm_output(llm_response):
     fig.update_layout(scene=dict(aspectmode="cube"),
                       uirevision='layout'  # Keep selection state during updates
                       )
+    def update_point(trace, points, selector):
+        if points.point_inds:
+            selected_agency = trace.text[points.point_inds[0]]
+            associated_topics = [topic for topic, attrs in G.nodes(data=True) if
+                                 G.has_edge(selected_agency, topic) and attrs["node_type"] == "topic"]
+
+            # Set opacity for all nodes and edges
+            fig.update_traces(marker=dict(opacity=0.5), selector=dict(type='scatter3d'))
+            fig.update_traces(line=dict(opacity=0.5), selector=dict(type='scatter3d'))
+
+            # Set opacity for selected agency and associated topics
+            fig.update_traces(marker=dict(opacity=1), selector=dict(text=selected_agency))
+            fig.update_traces(line=dict(opacity=1), selector=dict(source=selected_agency))
+
+            fig.update_traces(marker=dict(opacity=1), selector=dict(text=associated_topics))
+            fig.update_traces(line=dict(opacity=1), selector=dict(target=associated_topics))
+
+    fig.data[0].on_click(update_point)
+         
     st.plotly_chart(fig)
 
 
