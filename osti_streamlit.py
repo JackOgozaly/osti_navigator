@@ -33,14 +33,14 @@ import sqlite3
 
 #Streamlit customization items
 st.title('OSTI Navigator')
-st.caption('A LLM built on OSTI Metadata')
+st.caption('A LLM built on a sample of OSTI.gov metadata')
 #Introduction text
 introduction_text = "Hello! I'm OSTI naviagor bot. I can help you navigate around the OSTI repository and find useful research. How can I assist you today?"\
 
 #Example prompts
 button_1_text = 'Renewable Energy'
 button_2_text = 'Solar Power'
-button_3_text = 'Molten Salts'
+button_3_text = 'Hydrogen'
 
 #Bring in API Key
 os.environ["OPENAI_API_KEY"] = st.secrets["openai_key"]
