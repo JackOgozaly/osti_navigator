@@ -245,7 +245,7 @@ def llm_output(llm_response):
 
     st.dataframe(df)
     
-    data = network_graph_df(df)
+    data = network_graph_df(st.session_state['df'])
     print(data)
     # Create a networkx graph
     G = nx.Graph()
