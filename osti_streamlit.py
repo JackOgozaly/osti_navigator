@@ -268,7 +268,7 @@ def llm_output(llm_response):
         z=[pos[node][2] for node, attrs in G.nodes(data=True) if attrs["node_type"] == "agency"],
         text=[node for node, attrs in G.nodes(data=True) if attrs["node_type"] == "agency"],
         mode="markers+text",
-        marker=dict(size=20, color="blue"),  # Adjust the size for agency nodes
+        marker=dict(size=5, color="blue"),  # Adjust the size for agency nodes
         hovertemplate="%{text}<extra></extra>"
     )
 
