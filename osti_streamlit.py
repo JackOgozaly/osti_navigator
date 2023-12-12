@@ -246,8 +246,6 @@ def llm_output(llm_response):
          
     data = network_graph_df(df)
 
-    for key, value in data.items():
-       st.write(f'{key}: {value}')
     # Create a networkx graph
     G = nx.Graph()
 
@@ -308,9 +306,9 @@ def llm_output(llm_response):
                         hovermode="closest",
                         margin=dict(b=0, l=0, r=0, t=0),
                         scene=dict(
-                            xaxis=dict(title="X"),
-                            yaxis=dict(title="Y"),
-                            zaxis=dict(title="Z")
+                            xaxis=dict(title="X", showgrid=False, showline=False, showticklabels=False),
+                            yaxis=dict(title="Y", showgrid=False, showline=False, showticklabels=False),
+                            zaxis=dict(title="Z", showgrid=False, showline=False, showticklabels=False)
                         )
                     )
     )
