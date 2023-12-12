@@ -8,3 +8,5 @@ chromadb==0.4.17
 pysqlite3-binary==0.5.2
 tiktoken==0.5.1
 faiss-cpu==1.7.4
+plotly==5.18.0
+networkx==3.2.1
